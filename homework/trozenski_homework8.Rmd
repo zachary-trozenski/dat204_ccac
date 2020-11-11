@@ -1,0 +1,107 @@
+---
+title: "Homework 8"
+author: "Zach Trozenski"
+date: "11/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+```
+
+## R Markdown Homework
+
+### Research Question
+
+What is the most popular breed of dog in my area, as defined by ZIP code? Does this track with the most popular breeds in Allegheny county? My ZIP code is `15238` and [consists of these communities.](https://www.unitedstateszipcodes.org/15238/) 
+
+## Dogs in my ZIP code
+
+### Methodology
+
+I first set the proper working directory so that I can read the csv. The CSV file was pulled from Blackboard. After looking over the column headers I created a subset of the full data set exclusive to my ZIP code. I then created a vector of all unique breeds in my area and ran a for loop to count the number of each breed. With the tallies of each breed in a vector the same order and length as the unique breed vector, I join the two in a data frame then sort the data frame by breed count in descending order. Originally, I had plotted all breeds but the graph was too cluttered and the data was too noisy, so I restricted the breeds to the top 10 by count. Here is my code:
+
+```{R}
+setwd("/Users/zack/dat204_ccac/")
+
+dogs <- read.csv('allegheny_county_dog_licenses.csv')
+#head(dogs)
+
+dogs_in_my_zip <- dogs[dogs$OwnerZip == 15238, ]
+#head(dogs_in_my_zip)
+
+breeds_in_my_zip <- unique(dogs_in_my_zip$Breed)
+
+breed_num <- vector()
+for (breed in breeds_in_my_zip){
+  temp <- sum(dogs_in_my_zip$Breed == breed)
+  breed_num <- c(breed_num, temp)
+}
+
+breed_counts_in_my_zip <- data.frame("Breed" = breeds_in_my_zip, "Count" = breed_num)
+
+ordered_breeds <- breed_counts_in_my_zip[order(-breed_counts_in_my_zip$Count),]
+top_breeds <- ordered_breeds[1:10, ]
+```
+
+## Top 10 Dog Breeds in 15238
+
+```{R, echo=FALSE}
+library(ggplot2)
+ggplot(top_breeds, aes(x = top_breeds$Breed, y = top_breeds$Count)) + 
+  geom_bar(stat = "identity", fill = "#3399FF") +
+  labs(x = "Breed Name", y = "Count", title = "Top 10 Dog Breeds in 15238") +
+  theme(axis.text.x = element_text(size=5, angle=15)) + 
+  theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.grid.major.y = element_line(color="black"), panel.grid.major.x = element_blank())
+```
+
+## Dogs in Allegheny County
+
+### Methodology
+
+My code is nearly identical to that which I used for my ZIP code. The biggest difference is that I'm removing all records of dog registrations from my ZIP code as to create a more applicable comparison. I don't want to double count or skew the data.
+
+```{R}
+allg_dogs <- dogs[dogs$OwnerZip != 15238, ]
+
+allg_breeds <- unique(allg_dogs$Breed)
+
+breed_num_allg <- vector()
+for (breed in allg_breeds){
+  temp <- sum(dogs$Breed == breed)
+  breed_num_allg <- c(breed_num_allg, temp)
+}
+
+breed_counts_allg <- data.frame("Breed" = allg_breeds, "Count" = breed_num_allg)
+
+ordered_allg_breeds <- breed_counts_allg[order(-breed_counts_allg$Count),]
+top_allg_breeds <- ordered_allg_breeds[1:10, ]
+```
+
+## Top 10 Dog Breeds in Allegheny County
+
+```{R, echo=FALSE}
+ggplot(top_allg_breeds, aes(x = top_allg_breeds$Breed, y = top_allg_breeds$Count)) + 
+  geom_bar(stat = "identity", fill = "#990066") +
+  labs(x = "Breed Name", y = "Count", title = "Top 10 Dog Breeds in Allegheny County") +
+  theme(axis.text.x = element_text(size=5, angle=15)) + 
+  theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.grid.major.y = element_line(color="black"), panel.grid.major.x = element_blank())
+```
+
+## Results
+
+Based on the graphs, the breed `Mixed` and `Labrador Retriever` are the top 2 dog breeds both in my ZIP code and Allegheny county, though `Mixed` is the far and away the leader in Allegheny County. It is unfortunate that `Mixed` is not detailed in any way beyond the immediate meaning, which creates some ambiguity as to what this group entails. On the whole however, there is strong overlap between the two data sets with. The data suggests that the majority of the breeds in my ZIP code are larger dogs, which aligns with the data from Allegheny county. Superficially there does not appear to be a large gap between which breeds are popular in Allegheny county as compared to my ZIP code.
+
+
+### References
+Sources which helped iron out formatting wrinkles: 
+
+* [StackOverflow](https://stackoverflow.com/) 
+* [Cookbook for R](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/)
+* [knitr in a knutshell](http://kbroman.org/knitr_knutshell/pages/Rmarkdown.html)
+* [ggplot2 documentation](https://ggplot2.tidyverse.org/)
+
+
+

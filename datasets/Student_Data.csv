@@ -1,0 +1,20 @@
+student name,grade,gender,study session
+Sara,98,Female,TRUE
+Cody,92,Male,TRUE
+Trish,87,Female,FALSE
+Curt,85,Male,FALSE
+Abby,84,Female,FALSE
+Justin,82,Male,FALSE
+Melissa,92,Female,TRUE
+Breanna,91,Female,TRUE
+Jerry,89,Other,TRUE
+Brad,84,Male,TRUE
+Lisa,72,Female,TRUE
+George,78,Male,FALSE
+Patrick,89,Male,TRUE
+Robert,92,Male,TRUE
+Deb,83,Female,FALSE
+Nick,94,Male,TRUE
+Erika,96,Female,TRUE
+Jo,99,Other,TRUE
+Tyler,71,Male,FALSE
