@@ -1,0 +1,251 @@
+---
+title: "DAT-204 - R for Data Analytics: Final Project"
+author: "Zach Trozenski"
+date: "12/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+```
+
+### An analysis of the previous 5 years worth of storm events
+
+#### Introduction
+
+For my final project I wanted to revisit a data set I had originally queried for DAT-202 from the National Climatic Data Center (NCDC) [Storm Events Database.](https://www.ncdc.noaa.gov/stormevents/choosedates.jsp?statefips=42%2CPENNSYLVANIA#) The data set was composed of self-selected severe weather events for a given time range in a given area. When I ran the query to create this data set it was with the purpose of attempting to forecast severe weather based on historical data, however my plans changed and I chose to forecast a different data set still within the weather domain (as it turns out forecasting rain is best left to the professionals). Revisiting the storm events data presented a good opportunity however to conduct analysis in R.
+
+Here are some of the questions I was hoping to answer:
+
+* Which storm events were the most common in our area over the past five years?
+* How much damage (as measured in USD) do these storms cause on average?
+* When did the most destructive storms occur? 
+    * Does the data indicate they are increasing?
+* In the data set, is there a correlation between storm severity and damage in USD?
+* Who reports and documents the storms?
+    * Are there any observable changes over time?
+
+Please note the code is not being echoed in the markdown document for brevity and cleanliness. The raw markdown file is posted on my [Github account here.]()
+For reference here is the [data dictionary,](https://www1.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles/Storm-Data-Export-Format.pdf)
+
+```{R, echo=FALSE}
+# load the ggplot2 library for graphics later in the document
+library(ggplot2)
+
+# setting the proper directory to read in and write out to the location i want
+setwd("/Users/zack/dat204_ccac/final_project/")
+
+# read in the csv file containing my data
+storm_data <- read.csv('storm_data_PA_AGC_15-20.csv')
+```
+
+### Most common storms in our area
+
+Using a combination of a `for` loop and the `unique()` function I created a dataframe of the total counts of all storm events in descending order:
+
+```{R, echo=FALSE}
+
+
+## make a small data frame to count the occurrences of each event to understand what
+## happens most frequently here
+
+# get all unique event type values and store in variable
+events <- unique(storm_data$EVENT_TYPE)
+
+# create empty vector
+event_count <- vector()
+
+# loop through the list of unique events, creating a vector of the sum of each matching instance
+# of the unique events and their listing in the data frame, return a vector of counts
+for (s in events){
+  local <- sum(storm_data$EVENT_TYPE == s)
+  event_count <- c(event_count, local)
+}
+
+# create a data frame from unique events and their counts with new headers
+event_totals <- data.frame("Weather.Event" = events, "Total.Count" = event_count)
+
+# order the count by descending totals
+ordered_events <- event_totals[order(-event_totals$Total.Count),]
+
+#print
+print(ordered_events)
+
+```
+
+The most common storm events in our area over the previous 5 years have been Thunderstorm Winds and Flash Floods. The two events seem to go hand in hand, as it suggests that thunderstorms can cause both the high damaging winds as well as flash floods. (Please note the index at the far left of the data frame is the original order in which the events were listed and doesn't factor into the count.)
+
+Now that we know the most common storm events let's shift our focus onto the damage they can cause. 
+
+### Storm destruction measured in dollars
+
+The data set contains estimations for the total amount of crop and property damage a storm event caused. Additionally the data set also accounts for injuries and deaths directly caused by the storm. Luckily the number of injuries and deaths relative to the total number of storm events logged is low. Instead let's focus on the damage estimates.
+
+To get a total count of each storm event's estimated damage, I created a new series in the data frame which summed the crop and property damage estimates and added it to my original data frame. From there I ran the `summary()` function to get descriptive statistics on the the total estimates of storm event damage.
+
+```{R, echo=FALSE}
+# Let's add a column to the data frame that sums all the damage estimates
+total_damage <- storm_data$DAMAGE_PROPERTY_NUM + storm_data$DAMAGE_CROPS_NUM
+storm_data$TOTAL_DAMAGE=total_damage
+
+# Getting descriptive statistics on total damage
+print(summary(storm_data$TOTAL_DAMAGE))
+```
+
+```{R, echo=FALSE}
+# Get the standard deviation
+s_dev <- sd(storm_data$TOTAL_DAMAGE)
+print(c("Standard deviation: ", s_dev))
+``` 
+
+The descriptive statistics indicate that the most of the estimates are quite low coming in at $1000 USD. What is interesting is that the Maximum value, which taken into consideration with the median and mean values seem to indicate it is an extreme outlier which would also explain the mean value being much higher than the 3rd quartile and the median. 
+That being said, we must confron the absurdly large standard deviation. While we are getting a low median value the standard deviation is massive which tells us our data is distributed on a very large range. I think it would be helpful to visualize the distribution of the total storm damage to augment our understanding of the descriptive statistics.
+
+```{R, echo=FALSE}
+# pull all the unique damage estimate totals into a vector
+dam <- unique(storm_data$TOTAL_DAMAGE)
+
+# create empty vector
+count <- vector()
+
+# loop through the list of damage totals, creating a vector of the sum of each matching instance
+# of the unique events and their listing in the data frame, return a vector of counts
+for (s in dam){
+  local <- sum(storm_data$TOTAL_DAMAGE == s)
+  count <- c(count, local)
+}
+
+# create a data frame from totals and their counts with new headers
+count_totals <- data.frame("Damage.Value" = dam, "Count" = count)
+
+# plot the dataframe as a scatter plot
+ggplot(count_totals) + geom_point(aes(x = Damage.Value, y = Count), stat="identity", color = "#FF3300") + 
+  scale_x_continuous(limit = c(0,100000)) + 
+  scale_y_continuous(limit = c(0, 75)) + 
+  theme(panel.background = element_rect(fill = "white")) + 
+  theme(panel.grid.major.y = element_line(color="#CCCCCC")) +
+  labs(x = "Total Estimated Damage in USD", y = "Frequency of Estimated Damage Total") +
+  labs(title = "Frequency of Total Estimated Damage in USD for all Storm Events 2015 - 2020")
+  #theme(panel.grid.major.x = element_line(color="#CCCCCC"))
+
+
+```
+
+(Note: I've cut off the outliers at the top and bottom of the cost range (`$0 = 152`, `$10.1MM = 1`) for clarity.)
+
+Based on this plot we can see that our assumptions about the distribution of data, that it's concentrated heavily at the lower range but with a large distribution. Given the descriptive statistics together with the plot we can assume that a given severe storm event won't cause an extreme amount of damage. While that may be the case, we only know the frequency of a storms damage. We don't know if the damage is increasing over time or when the most severe storms occurred. 
+
+### Most destructive storms in the data set
+
+Let's create a subset of the data to only look at the most destructive storms and see if we can detect any patterns. First, we'll slice our data set by pulling all storms that have total storm damage higher than the mean of $33,262. I noticed when I was plotting this subset that the maximum value was creating some difficulty in making the graph legible, so I scaled the the total damage so that it would reflect values in millions of dollars rather than the absolute value.
+
+```{R, echo=FALSE}
+# Using the mean from the descriptive statistics, let's see what the most destructive
+# storms over the past 5 years have been
+destruction <- storm_data[storm_data$TOTAL_DAMAGE > 33262, ]
+
+# to better plot the data let's scale down the damage
+scaled_damage <- destruction$TOTAL_DAMAGE / 1000000
+#print(scaled_damage)
+destruction$SCALED_DAMAGE=scaled_damage
+
+ggplot(destruction, aes(y=BEGIN_DATE, x=SCALED_DAMAGE)) +
+  geom_histogram(stat="identity", fill="#006699") +
+  theme(axis.text.y = element_text(size=8, angle=15)) +
+  labs(y = "Storm Date", title = "Above Avgerage Storm Damage 2015 - 2020 in Allegheny County",
+       x = "Damage (Million USD)") +
+  theme(panel.background = element_rect(fill = "white"))
+```
+
+We can see from this graph there are 10 storms above the mean of $32,262 in total estimated damage. These storms are all the storms that are causing the mean to skew higher, significantly higher than the median, as well as stretch the standard deviation. It certainly may appear like storms are getting more destructive as time passes but let's plot these storms by year to see if there is a trend.
+
+```{R, echo=FALSE}
+# let's dig into these destructive storms some more and pare down the original dataset
+dest_small <- destruction[ , c("BEGIN_LOCATION", "BEGIN_DATE", "EVENT_TYPE", "MAGNITUDE",
+                               "FLOOD_CAUSE", "END_LOCATION", "BEGIN_LAT",
+                               "BEGIN_LON", "END_LAT","END_LON")]
+print(dest_small)
+
+# is there a trend in severe weather events increasing over time?
+# need to extract the year values from the BEGIN_DATE column, so we'll read the row values as date
+# objects, then only pull the year
+storm_years <- format(as.Date(dest_small$BEGIN_DATE, format="%m/%d/%Y"),"%Y")
+# now that we have a vector of years, let's add it as a new column to our dataframe
+dest_small$YEAR=storm_years
+
+# Now let's plot the severe weather by year to see if there's a trend
+ggplot(dest_small, aes(x=YEAR)) + geom_bar(stat="count", fill="#CC99FF") +
+  labs(x = "Severe Weather Events Per Year", y = "Count") +
+  labs(title = "Distribution of Above Average Destructive Storms in Allegheny County by Year ") +
+  theme(panel.background = element_rect(fill = "white"))
+
+```
+There isn't much evidence or data to back the claim up, but it does appear that there is a trend of storms increasing in destruction, as measured in USD, over time. There would need to be a much heavier analysis into a multitude of data sets to determine why the storms are increasing in severity and furthermore why 2018 of the six available years was the most destructive in terms of dollar value.
+
+
+### Thunderstorm winds
+
+Seeing as thunderstorm winds are the most prevalent severe storm events, it would be a poor analysis of the data to ignore them completely as a facet. The thunderstorm wind has a measurement of magnitude as captured in two different categories: estimated magnitude and measured magnitude. Magnitude here refers to wind speed in knots. In order to get an understanding of the magnitude of the thunderstorm winds let's plot the two categories as box plot.
+
+```{R, echo=FALSE}
+### TSTORM WIND
+# The most common event are thunderstorm winds, let's slice the dataset to only show thunderstorm
+# wind records so we can analyze it
+
+t_storms <- storm_data[storm_data$EVENT_TYPE == "Thunderstorm Wind", ]
+
+# There are two methods of capturing windspeed, let's plot them to better understand the data
+ggplot(data = t_storms, mapping = aes(y = MAGNITUDE, x = MAGNITUDE_TYPE)) + 
+  geom_boxplot(fill="#FF6666") + theme(panel.background = element_rect(fill = "white")) +
+  theme(panel.grid.major.y = element_line(color="#CCCCCC")) + 
+  labs(y = "Wind Speed in Knots", x = "Estimated vs. Measured") +
+  labs(title = "Thunderstrom Wind Speeds by Category in Allegheny County 2015 - 2020")
+```
+
+There doesn't appear to be much consistency in the estimated data, which stands to reason since there by all accounts there was no instrument used to verify the wind speed. There is however much more consistency in the thunderstorm wind speed as it was measured, the majority of the winds reached between 50 and 60 knots (roughly 57 - 69 miles per hour). While these aren't hurricane force winds, they are however classified as damaging winds.
+
+Now let's try to get an understanding for the damage these winds cause in terms of dollar values by measurement category.
+
+```{R, echo=FALSE}
+# Now let's plot the windspeed in knots by damage
+ggplot(data = t_storms, mapping = aes(y = MAGNITUDE, x = TOTAL_DAMAGE, color = MAGNITUDE_TYPE)) +
+  geom_point() +
+  scale_y_continuous(limits = c(40,76)) +
+  labs(x = "Total Damage (USD)", y = "Wind Speed in Knots", color = "Measured vs. Estimated") +
+  labs(title = "Damage By Thunderstorm Wind Speed in Allegheny County 2015 - 2020")
+```
+Here we see the measured data reporting no damage but we are seeing a fair amount of distribution across our dollar range. We can calculate correlation, in particular Pearson's correlation coefficient, to produce a number that can tell us whether in our data higher wind speed is correlated to higher damages.
+
+```{R, echo=FALSE}
+p_cor <- cor(t_storms$MAGNITUDE, t_storms$TOTAL_DAMAGE)
+print(c("Correlation coefficient: ", p_cor))
+```
+
+Unfortunately the data does not indicate a correlation between wind speed and estimated damage as the value is much closer to zero, indicated no relationship. As an aside I thought this was interesting since it stands to reason that there would be higher damages with higher wind speeds.
+
+
+### Reporting of severe storms
+
+One point of interest that I had was how storm events are reported and whether or not it has changed from 2015 to 2020. Are there any trends or changes that we can observe? Does social media have a larger presence now than it had as it becomes more integral in daily life?
+
+```{R, echo=FALSE}
+# create a new series to contain solely year values
+storm_years <- format(as.Date(storm_data$BEGIN_DATE, format="%m/%d/%Y"),"%Y")
+# add it to the data frame
+storm_data$YEAR=storm_years
+
+# concatenate the dataframes into a new frame
+reporter_comp <- rbind(fifteen, twenty)
+
+ggplot(data = storm_data) + geom_bar(aes(x=SOURCE), fill="#33CCCC") +
+  facet_wrap(~YEAR, nrow = 2) +
+  theme(axis.text.x = element_text(size=3, angle=25)) +
+  labs(x = "Reporter", y = "Number of sever storms reported") +
+  labs(title = "Severe storms by reporter for Allegheny County 2015 - 2020")
+  
+```
+
+Unfortunately there doesn't appear to be much in terms of trends that are clearly observable. Reporting does appear to consistently come from 911 call centers and social media does have a fairly established presence but there are no apparent patterns or relationships we can see. 
+
+
+

@@ -22,7 +22,7 @@ What is the most popular breed of dog in my area, as defined by ZIP code? Does t
 I first set the proper working directory so that I can read the csv. The CSV file was pulled from Blackboard. After looking over the column headers I created a subset of the full data set exclusive to my ZIP code. I then created a vector of all unique breeds in my area and ran a for loop to count the number of each breed. With the tallies of each breed in a vector the same order and length as the unique breed vector, I join the two in a data frame then sort the data frame by breed count in descending order. Originally, I had plotted all breeds but the graph was too cluttered and the data was too noisy, so I restricted the breeds to the top 10 by count. Here is my code:
 
 ```{R}
-setwd("/Users/zack/dat204_ccac/")
+setwd("/Users/zack/dat204_ccac/homework/")
 
 dogs <- read.csv('allegheny_county_dog_licenses.csv')
 #head(dogs)
