@@ -95,7 +95,7 @@ print(summary(storm_data$TOTAL_DAMAGE))
 ```
 
 ```{R, echo=FALSE}
-# Get the standard deviation
+# Get the standard deviation and print it
 s_dev <- sd(storm_data$TOTAL_DAMAGE)
 print(c("Standard deviation: ", s_dev))
 ``` 
@@ -151,6 +151,7 @@ scaled_damage <- destruction$TOTAL_DAMAGE / 1000000
 #print(scaled_damage)
 destruction$SCALED_DAMAGE=scaled_damage
 
+# plot the data 
 ggplot(destruction, aes(y=BEGIN_DATE, x=SCALED_DAMAGE)) +
   geom_histogram(stat="identity", fill="#006699") +
   theme(axis.text.y = element_text(size=8, angle=15)) +
@@ -193,14 +194,15 @@ Seeing as thunderstorm winds are the most prevalent severe storm events, it woul
 # The most common event are thunderstorm winds, let's slice the dataset to only show thunderstorm
 # wind records so we can analyze it
 
+# pull only the thunderstorm wind event type
 t_storms <- storm_data[storm_data$EVENT_TYPE == "Thunderstorm Wind", ]
 
-# There are two methods of capturing windspeed, let's plot them to better understand the data
+# There are two methods of capturing wind speed, let's plot them to better understand the data
 ggplot(data = t_storms, mapping = aes(y = MAGNITUDE, x = MAGNITUDE_TYPE)) + 
   geom_boxplot(fill="#FF6666") + theme(panel.background = element_rect(fill = "white")) +
   theme(panel.grid.major.y = element_line(color="#CCCCCC")) + 
   labs(y = "Wind Speed in Knots", x = "Estimated vs. Measured") +
-  labs(title = "Thunderstrom Wind Speeds by Category in Allegheny County 2015 - 2020")
+  labs(title = "Thunderstorm Wind Speeds by Category in Allegheny County 2015 - 2020")
 ```
 
 There doesn't appear to be much consistency in the estimated data, which stands to reason since there by all accounts there was no instrument used to verify the wind speed. There is however much more consistency in the thunderstorm wind speed as it was measured, the majority of the winds reached between 50 and 60 knots (roughly 57 - 69 miles per hour). While these aren't hurricane force winds, they are however classified as damaging winds.
@@ -218,6 +220,7 @@ ggplot(data = t_storms, mapping = aes(y = MAGNITUDE, x = TOTAL_DAMAGE, color = M
 Here we see the measured data reporting no damage but we are seeing a fair amount of distribution across our dollar range. We can calculate correlation, in particular Pearson's correlation coefficient, to produce a number that can tell us whether in our data higher wind speed is correlated to higher damages.
 
 ```{R, echo=FALSE}
+# calculate and print the pearson correlation coefficient
 p_cor <- cor(t_storms$MAGNITUDE, t_storms$TOTAL_DAMAGE)
 print(c("Correlation coefficient: ", p_cor))
 ```
@@ -235,6 +238,7 @@ storm_years <- format(as.Date(storm_data$BEGIN_DATE, format="%m/%d/%Y"),"%Y")
 # add it to the data frame
 storm_data$YEAR=storm_years
 
+# plot the counts of the reporters of severe storms by year 
 ggplot(data = storm_data) + geom_bar(aes(x=SOURCE), fill="#33CCCC") +
   facet_wrap(~YEAR, nrow = 2) +
   theme(axis.text.x = element_text(size=3, angle=25)) +
