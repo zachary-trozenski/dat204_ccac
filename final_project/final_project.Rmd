@@ -1,8 +1,10 @@
 ---
-title: "DAT-204 - R for Data Analytics: Final Project"
+title: 'DAT-204 - R for Data Analytics: Final Project'
 author: "Zach Trozenski"
 date: "12/8/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +27,7 @@ Here are some of the questions I was hoping to answer:
 * Who reports and documents the storms?
     * Are there any observable changes over time?
 
-Please note the code is not being echoed in the markdown document for brevity and cleanliness. The raw markdown file is posted on my [Github account here.]()
+Please note the code is not being echoed in the markdown document for brevity and cleanliness. The raw markdown file is posted on my [Github account here.](https://github.com/zachary-trozenski/dat204_ccac/blob/main/final_project/final_project.Rmd)
 For reference here is the [data dictionary,](https://www1.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles/Storm-Data-Export-Format.pdf)
 
 ```{R, echo=FALSE}
@@ -164,7 +166,6 @@ We can see from this graph there are 10 storms above the mean of $32,262 in tota
 dest_small <- destruction[ , c("BEGIN_LOCATION", "BEGIN_DATE", "EVENT_TYPE", "MAGNITUDE",
                                "FLOOD_CAUSE", "END_LOCATION", "BEGIN_LAT",
                                "BEGIN_LON", "END_LAT","END_LON")]
-print(dest_small)
 
 # is there a trend in severe weather events increasing over time?
 # need to extract the year values from the BEGIN_DATE column, so we'll read the row values as date
@@ -176,7 +177,7 @@ dest_small$YEAR=storm_years
 # Now let's plot the severe weather by year to see if there's a trend
 ggplot(dest_small, aes(x=YEAR)) + geom_bar(stat="count", fill="#CC99FF") +
   labs(x = "Severe Weather Events Per Year", y = "Count") +
-  labs(title = "Distribution of Above Average Destructive Storms in Allegheny County by Year ") +
+  labs(title = "Above Average Destructive Storms in Allegheny County by Year ") +
   theme(panel.background = element_rect(fill = "white"))
 
 ```
@@ -234,9 +235,6 @@ storm_years <- format(as.Date(storm_data$BEGIN_DATE, format="%m/%d/%Y"),"%Y")
 # add it to the data frame
 storm_data$YEAR=storm_years
 
-# concatenate the dataframes into a new frame
-reporter_comp <- rbind(fifteen, twenty)
-
 ggplot(data = storm_data) + geom_bar(aes(x=SOURCE), fill="#33CCCC") +
   facet_wrap(~YEAR, nrow = 2) +
   theme(axis.text.x = element_text(size=3, angle=25)) +
@@ -247,5 +245,7 @@ ggplot(data = storm_data) + geom_bar(aes(x=SOURCE), fill="#33CCCC") +
 
 Unfortunately there doesn't appear to be much in terms of trends that are clearly observable. Reporting does appear to consistently come from 911 call centers and social media does have a fairly established presence but there are no apparent patterns or relationships we can see. 
 
+### Conclusion
 
+Overall the severe storm data reveals some interesting nuances and insights into the weather we experience in our region. I didn't expect that thunderstorm winds would be the most commonly reported storms or that the median total damage estimate was roughly $33k. I had naively thought there would be a trend of increasing instances of severe storms as climate change is causing the severity of weather to increase across the nation. Additionally, I thought that maybe there would be some observable trends in how the storms are reported, or at least there would be some correlation in the data between wind speed and damage. I think this exercise has been a valuable lesson in the difference between reality and expectation. I went into this looking to validate a particular narrative and was proven they aren't plainly evident in the data. While that doesn't mean my thinking is wrong prima facie, rather it reaffirms that there are complex systems at work in the world that need to be understood with measured nuance and skepticism. 
 
