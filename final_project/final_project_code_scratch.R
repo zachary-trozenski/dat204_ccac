@@ -132,3 +132,12 @@ cor(t_storms$MAGNITUDE, t_storms$TOTAL_DAMAGE)
 # wind speed and total damage. This comes to me as a surprise since it stands to reason that
 # higher winds would contribute to more damage. However it seems within this data set that is
 # not the case
+
+
+## Plot coordinates!
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(mapview)
+
+mapview(t_storms, xcol = "BEGIN_LON", ycol = "BEGIN_LAT", crs = 4269, grid = FALSE)
